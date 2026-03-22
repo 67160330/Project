@@ -56,8 +56,8 @@ with tab1:
 
             # แสดงผลแบบ Metrics
             c1, c2 = st.columns(2)
-            c1.metric("กำไรจากการคาดการณ์ \n(Predicted Profit)", f"${prediction:,.2f}")
-            c2.metric("อัตรากำไรสุทธิ \n(Profit Margin)", f"{margin:.2f}%")
+            c1.metric("กำไรจากการคาดการณ์ (Predicted Profit)", f"${prediction:,.2f}")
+            c2.metric("อัตรากำไรสุทธิ (Profit Margin)", f"{margin:.2f}%")
 
             if prediction > 0:
                 st.success(f"**สรุป:** รายการนี้มีแนวโน้มได้รับผลกำไรประมาณ **${prediction:,.2f}**")
