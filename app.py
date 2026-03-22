@@ -3,7 +3,7 @@ import pandas as pd
 import pickle
 
 # โหลดโมเดล
-model = pickle.load(open('profit_model.pkl', 'rb'))
+model = joblib.load('profit_model.pkl')
 cols = pickle.load(open('model_columns.pkl', 'rb'))
 
 st.title("💰 SuperStore Profit Predictor")
