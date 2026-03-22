@@ -3,94 +3,102 @@ import pandas as pd
 import joblib
 import plotly.express as px
 
-# 1. Page Config - ตั้งค่าหน้าเว็บ
+# 1. Page Config
 st.set_page_config(page_title="SuperStore Profit Intelligence", page_icon="💰", layout="wide")
 
 
 # 2. Load Model
 @st.cache_resource
 def load_assets():
-    # ใช้ joblib โหลดโมเดลที่เราเทรนมา
     model = joblib.load('profit_model.pkl')
     return model
 
 
 model = load_assets()
 
-# --- ส่วนหัว (Header) แบบ Professional ---
+# --- Header ---
 st.markdown("""
     <div style='background-color:#0f172a;padding:30px;border-radius:15px;margin-bottom:25px;border-left: 10px solid #3b82f6;'>
-        <h1 style='color:white;margin:0;font-family:sans-serif;'>📊 SuperStore Business Intelligence</h1>
-        <p style='color:#94a3b8;margin:5px 0 0 0;font-size:1.1em;'>ระบบพยากรณ์กำไรและวิเคราะห์ปัจจัยสำคัญด้วย Machine Learning</p>
+        <h1 style='color:white;margin:0;'>📊 SuperStore Business Intelligence</h1>
+        <p style='color:#94a3b8;margin:5px 0 0 0;font-size:1.1em;'>ระบบวิเคราะห์และพยากรณ์กำไรด้วย Machine Learning</p>
     </div>
     """, unsafe_allow_html=True)
 
-# --- แบ่งส่วนการทำงานด้วย Tabs ---
-tab1, tab2 = st.tabs(["🚀 ระบบพยากรณ์กำไร", "🔍 บทวิเคราะห์โมเดล (Insights)"])
+# --- Tabs ---
+tab1, tab2 = st.tabs(["🚀 พยากรณ์กำไร (Prediction)", "🔍 เจาะลึกการตัดสินใจของ AI (Insights)"])
 
 with tab1:
     col1, col2 = st.columns([1, 1.2], gap="large")
-
     with col1:
         st.subheader("📥 ข้อมูลรายการขาย")
         with st.container(border=True):
-            sales = st.number_input("ยอดขาย (Sales $)", min_value=0.0, value=250.0,
-                                    help="ราคาสินค้าทั้งหมดก่อนหักค่าใช้จ่าย")
+            sales = st.number_input("ยอดขาย (Sales $)", min_value=0.0, value=250.0)
             quantity = st.number_input("จำนวนสินค้า (Quantity)", min_value=1, value=5)
-            discount = st.slider("ส่วนลด (Discount Rate)", 0.0, 1.0, 0.1, help="0.1 คือ ลด 10%")
+            discount = st.slider("ส่วนลด (Discount Rate)", 0.0, 1.0, 0.1)
             shipping = st.number_input("ค่าขนส่ง (Shipping Cost $)", min_value=0.0, value=20.0)
-
-            st.markdown("---")
-            predict_btn = st.button("คำนวณกำไรคาดการณ์", use_container_width=True, type="primary")
+            predict_btn = st.button("คำนวณกำไร", use_container_width=True, type="primary")
 
     with col2:
-        st.subheader("🎯 ผลการพยากรณ์")
+        st.subheader("🎯 ผลการทำนาย")
         if predict_btn:
-            # เตรียมข้อมูลส่งให้ AI
             input_df = pd.DataFrame([[sales, quantity, discount, shipping]],
                                     columns=['sales', 'quantity', 'discount', 'shipping_cost'])
             prediction = model.predict(input_df)[0]
-
-            # คำนวณ Margin
             margin = (prediction / sales) * 100 if sales > 0 else 0
 
-            # แสดงผลแบบ Metrics
             c1, c2 = st.columns(2)
-            c1.metric("กำไรจากการคาดการณ์ (Predicted Profit)", f"${prediction:,.2f}")
-            c2.metric("อัตรากำไรสุทธิ (Profit Margin)", f"{margin:.2f}%")
+            c1.metric("Predicted Profit", f"${prediction:,.2f}")
+            c2.metric("Profit Margin", f"{margin:.2f}%")
 
             if prediction > 0:
-                st.success(f"**สรุป:** รายการนี้มีแนวโน้มได้รับผลกำไรประมาณ **${prediction:,.2f}**")
+                st.success(f"✅ รายการนี้มีแนวโน้มได้กำไรประมาณ ${prediction:,.2f}")
             else:
-                st.error(f"**สรุป:** รายการนี้มีความเสี่ยงที่จะขาดทุนประมาณ **${abs(prediction):,.2f}**")
-
-            # สร้างกราฟแท่งเปรียบเทียบ Profit vs Sales
-            st.bar_chart(pd.DataFrame({'Values': [sales, prediction]}, index=['Total Sales', 'Predicted Profit']))
+                st.error(f"⚠️ รายการนี้มีความเสี่ยงขาดทุนประมาณ ${abs(prediction):,.2f}")
         else:
-            st.info("กรุณาระบุข้อมูลที่แถบด้านซ้าย แล้วกดปุ่มเพื่อดูผลลัพธ์")
+            st.info("รอผลการพยากรณ์... (กรุณากรอกข้อมูลด้านซ้ายแล้วกดปุ่ม)")
 
 with tab2:
-    st.subheader("💡 AI Decision Making: ตัวแปรไหนสำคัญที่สุด?")
+    st.subheader("💡 ทำไม AI ถึงทำนายผลแบบนั้น?")
+    st.write("กราฟด้านล่างแสดงให้เห็นว่า **ตัวแปรไหนมีผลต่อการคำนวณกำไรมากที่สุด**")
 
-    # ดึงข้อมูลจากรูปที่คุณแคปมาใส่เป็นกราฟในแอปเลย
-    importance_data = pd.DataFrame({
-        'Features': ['Sales', 'Discount', 'Shipping Cost', 'Quantity'],
-        'Importance Score': [0.48, 0.28, 0.15, 0.09]  # ตัวเลขโดยประมาณจากรูปของคุณ
-    }).sort_values('Importance Score', ascending=True)
+    # ข้อมูล Feature Importance (อ้างอิงจากกราฟที่คุณส่งมา)
+    importance_df = pd.DataFrame({
+        'ปัจจัย (Features)': ['Sales', 'Discount', 'Shipping Cost', 'Quantity'],
+        'น้ำหนักความสำคัญ (%)': [48, 28, 15, 9]
+    }).sort_values('น้ำหนักความสำคัญ (%)', ascending=True)
 
-    fig = px.bar(importance_data, x='Importance Score', y='Features', orientation='h',
-                 title="Feature Importance (Random Forest Regressor)",
-                 color='Importance Score', color_continuous_scale='Blues')
+    # สร้างกราฟสวยๆ ด้วย Plotly
+    fig = px.bar(importance_df, x='น้ำหนักความสำคัญ (%)', y='ปัจจัย (Features)',
+                 orientation='h', text='น้ำหนักความสำคัญ (%)',
+                 color='น้ำหนักความสำคัญ (%)', color_continuous_scale='Blues')
+
+    fig.update_traces(texttemplate='%{text}%', textposition='outside')
+    fig.update_layout(showlegend=False, height=400)
 
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("""
-    **คำอธิบายกราฟ:**
-    * **ยอดขาย (Sales):** เป็นปัจจัยหลักที่โมเดลใช้คำนวณกำไร (มีอิทธิพลสูงสุด)
-    * **ส่วนลด (Discount):** เป็นตัวแปรที่ส่งผลกระทบอย่างมีนัยสำคัญต่อการลดลงของกำไร
-    * **ค่าขนส่ง (Shipping Cost):** มีผลในลำดับถัดมา ซึ่งโมเดลนำมาหักลบเพื่อให้ได้กำไรที่แม่นยำขึ้น
-    """)
+    # ส่วนอธิบาย Insight แบบเข้าใจง่าย (Bullet Points)
+    st.markdown("---")
+    st.subheader("📝 สรุป Insight สำหรับนักธุรกิจ")
 
-# --- Footer ---
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("""
+        **1. ยอดขาย (Sales) คือหัวใจหลัก**
+        * AI ให้ความสำคัญกับยอดขายเกือบ 50% เพราะเป็นตัวกำหนดขนาดกำไรเบื้องต้น
+
+        **2. ส่วนลด (Discount) คือตัวแปรอันตราย**
+        * มีผลต่อการทำนายสูงถึง 28% หมายความว่าการลดราคาเพียงเล็กน้อย ส่งผลกระทบต่อกำไรอย่างรวดเร็ว
+        """)
+
+    with c2:
+        st.markdown("""
+        **3. ค่าขนส่ง (Shipping) ต้องระวัง**
+        * เป็นต้นทุนแฝงที่ AI นำมาคำนวณเพื่อหักลบผลกำไรสุทธิ
+
+        **4. ระบบนี้ช่วยอะไร?**
+        * ช่วยให้เจ้าของร้านรู้ว่า 'ไม่ควรลดราคาจนเกินไป' แม้ยอดขายจะเยอะ แต่ถ้า Discount สูง AI จะเตือนทันทีว่าจะขาดทุน
+        """)
+
 st.divider()
-st.caption("Machine Learning Deployment Project | Algorithm: Random Forest Regressor")
+st.caption("AI Model: Random Forest Regressor | Created by [ชื่อของคุณ]")
