@@ -1,27 +1,23 @@
 import streamlit as st
 import pandas as pd
-import joblib  # ใช้ joblib แทน pickle ทั้งหมด
+import joblib  # แก้จุดที่ 1: เปลี่ยนจาก import pickle เป็น joblib
 
-# 1. โหลดโมเดล (ตรวจสอบชื่อไฟล์ให้ตรงกับใน GitHub)
+# แก้จุดที่ 2: การโหลดโมเดล (ใช้ joblib.load และไม่ต้องมี open(...) )
 model = joblib.load('profit_model.pkl')
 
 st.title("💰 SuperStore Profit Predictor")
-st.write("เครื่องมือพยากรณ์กำไรจากข้อมูลยอดขาย")
 
-# 2. สร้างช่องรับข้อมูล (Input)
-sales = st.number_input("ยอดขาย (Sales $)", value=0.0)
-quantity = st.number_input("จำนวนชิ้น (Quantity)", value=1, step=1)
-discount = st.slider("ส่วนลด (Discount)", 0.0, 0.8, 0.0)
-shipping = st.number_input("ค่าขนส่ง (Shipping Cost)", value=0.0)
+# สร้างช่องรับข้อมูล
+sales = st.number_input("Sales ($)", value=0.0)
+quantity = st.number_input("Quantity", value=1, step=1) # เพิ่มอันนี้เพื่อให้ตรงกับโมเดล
+discount = st.slider("Discount", 0.0, 0.8, 0.1)
+shipping = st.number_input("Shipping Cost", value=0.0)
 
-# 3. ปุ่มกดทำนายผล
-if st.button("พยากรณ์กำไร"):
-    # สร้าง DataFrame ให้มีชื่อคอลัมน์และลำดับเหมือนตอนที่เทรนใน Colab
+if st.button("Predict Profit"):
+    # ทำข้อมูลที่รับมาให้เป็น DataFrame (เรียงคอลัมน์ให้ตรงกับที่เทรนมา)
     input_data = pd.DataFrame([[sales, quantity, discount, shipping]],
                               columns=['sales', 'quantity', 'discount', 'shipping_cost'])
 
-    # พยากรณ์ผล
+    # พยากรณ์
     prediction = model.predict(input_data)
-
-    # แสดงผลลัพธ์
-    st.success(f"กำไรที่คาดการณ์ได้คือ: ${prediction[0]:,.2f}")
+    st.success(f"Estimated Profit: ${prediction[0]:,.2f}")
